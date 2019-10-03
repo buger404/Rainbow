@@ -19,43 +19,51 @@ Attribute VB_Exposed = False
     Dim AccountTime As Long
     Dim StayText As String
 '======================================
-Public Sub Login(ByVal index As Long)
-    CurrentAccount = index
+Public Sub Login(ByVal Index As Long)
+    CurrentAccount = Index
+    'AC = Account(index): ACN = AccountN(index)
+    If Index = 0 Then
+        AC = "0": ACN = "游客"
+    Else
+        AC = Account(Index): ACN = AccountN(Index)
+    End If
+    
     AccountMode = 2
     ECore.NewTransform transFadeIn, 700
-    StayText = "正在连接到服务器"
+    SE.Play "login.wav"
+    StayText = "正在连接服务器"
+    Sock.LocalPort = 64046: Sock.RemotePort = 64046
+    'Sock.Connect "172.17.10.36", "64046"
+    Sock.Connect "47.100.137.52", "64046"
+    'Sock.Connect "127.0.0.1", "6404"
+    Do While Sock.state <> 7
+        Select Case Sock.state
+            Case 3: StayText = "服务器连接挂起"
+            Case 4: StayText = "正在解析服务器域名"
+            Case 5: StayText = "已识别服务器主机"
+            Case 6: StayText = "正在连接服务器"
+            Case 8: StayText = "连接被关闭"
+            Case 9: StayText = "连接时出错"
+        End Select
+        DoTap
+    Loop
+    Money = -1
+    StayText = "正在取得玩家信息"
+    RemoteSend "login*" & AC
+    Do While Money = -1
+        DoTap
+    Loop
+    StayText = "你号没了"
 End Sub
 Public Sub Update()
     '游戏每一帧的过程（绘制过程请放在此处）
     
     Dim X As Long, y As Long
-    Dim FaceY As Single
     
     Page.Clear '清空画布
 
     Page.DrawImage "background" & IIf(Touched Or AccountMode = 2, "2", "") & ".png", Mouse.X / GW * -8, Mouse.y / GH * -8
     If Touched Then Page.Paint 0, 0, 0, GW, GH, argb(0.3 * 255, 0, 0, 0)
-    If AccountMode = 2 And CurrentAccount <> -1 Then
-        Dim Points()
-        ReDim Points(3)
-        y = GH / 2 - 20
-        Points(0) = 0: Points(1) = 0
-        Points(2) = 0: Points(3) = y
-        Dim Step2 As Long
-        Step2 = Int(GW / 14)
-        For X = 0 To (GW + Step2) Step Step2
-            ReDim Preserve Points(UBound(Points) + 2)
-            Points(UBound(Points) - 1) = X
-            Points(UBound(Points)) = y + Sin(GetTickCount / 800 + X / 10) * (GH * 0.2 / 2)
-            If GW / 2 >= X And GW / 2 <= X + Step2 Then FaceY = Points(UBound(Points)) - (GH / 2 - 30 - 5)
-        Next
-        ReDim Preserve Points(UBound(Points) + 4)
-        Points(UBound(Points) - 3) = GW: Points(UBound(Points) - 2) = y
-        Points(UBound(Points) - 1) = GW: Points(UBound(Points)) = 0
-        Page.PaintPolygon2 argb(0.1 * 255, 0, 0, 0), 0, Points(), True
-    End If
-    
-    Page.Paint 0, 0, 0, GW, 55, argb(255, 38, 38, 38)
     
     Dim TouchFace As Integer
     
@@ -100,11 +108,12 @@ Public Sub Update()
                 Page.Writes AccountN(i), X, GH / 2 + 42, 18, argb(IIf(Touched And TouchIndex = i, 1, 0.5) * 255, 255, 255, 255), align:=StringAlignmentCenter
             Next
         Case 2
+            If CurrentAccount >= 0 Then Page.Paint 0, 0, 0, GW, GH, argb(0.3 * 255, 255, 255, 255)
             Page.DrawImage "faceback.png", GW / 2, GH / 2 - 30 + FaceY, alpha:=1, pos:=posOnCenter
             If CurrentAccount <= 0 Then
-                Page.DrawImage "face.png", GW / 2, GH / 2 - 30 - 5 + FaceY + 1, alpha:=1, pos:=posOnCenter
+                Page.DrawImage "face.png", GW / 2, GH / 2 - 30 - 5 + 1, alpha:=1, pos:=posOnCenter
             Else
-                Page.DrawImage Account(CurrentAccount) & ".bmp", GW / 2, GH / 2 - 30 - 5 + FaceY + 1, alpha:=1, pos:=posOnCenter
+                Page.DrawImage Account(CurrentAccount) & ".bmp", GW / 2, GH / 2 - 30 - 5 + 1, alpha:=1, pos:=posOnCenter
             End If
             Page.Writes StayText, GW / 2, GH / 2 + 42 + FaceY, 18, argb(255, 255, 255, 255), align:=StringAlignmentCenter
     End Select
@@ -149,17 +158,12 @@ Public Sub Update()
         End If
     End If
     
-    Page.Writes "登录", 60, 15, 18, argb(255, 255, 255, 255), align:=StringAlignmentCenter
-    Page.Paint 0, 60, 55 - 3, 80, 6, argb(255, 50, 202, 185), pos:=posOnCenter
-    
-    Page.Writes "地图", 60 + 100, 15, 18, argb(255, 255, 255, 255), align:=StringAlignmentCenter
-    Page.Writes "商店", 60 + 100 * 2, 15, 18, argb(255, 255, 255, 255), align:=StringAlignmentCenter
 End Sub
 Public Sub Wheel(Direction As Integer, Depth As Single)
     '鼠标滚轮事件
     'Direction:方向，Depth：深度
 End Sub
-Public Sub AnimationMsg(id As String, msg As String)
+Public Sub AnimationMsg(ID As String, msg As String)
     '动画消息接收
 End Sub
 Public Sub Enter()
@@ -174,7 +178,7 @@ End Sub
 Public Sub Lostfocus()
     '窗口失去焦点事件
 End Sub
-Public Sub AnimationDone(id As Integer)
+Public Sub AnimationDone(ID As Integer)
     '动画播放结束事件
     'id：结束的动画ID
 End Sub

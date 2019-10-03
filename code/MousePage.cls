@@ -23,8 +23,17 @@ Attribute VB_Exposed = False
         b As Long
     End Type
     Dim Water() As MouseWater
+    Dim TL As Long, TR As Long, TabIndex As Integer
+    Dim OTL As Long, OTR As Long, TabTime As Long
 '======================================
-
+Public Sub SwitchTab(Index As Integer)
+    TabTime = GetTickCount
+    OTL = TL: OTR = TR
+    
+    TL = 60 + 100 * Index - 40
+    TR = 60 + 100 * Index + 40
+    TabIndex = Index
+End Sub
 Public Sub NewWater(ByVal X As Long, ByVal y As Long)
     Dim Co(3) As Byte, Color As Long
     Color = GetPixel(ECore.CDC, X, y)
@@ -47,6 +56,42 @@ Public Sub Update()
     Page.Clear 0 '清空画布
 
     Dim pro As Single
+
+    If ECore.ActivePage <> "StartupPage" Then
+        Page.Paint 0, 0, 0, GW, 55, argb(255, 38, 38, 38)
+        Dim M As Integer, Tabs(2) As String, i As Integer
+        Tabs(0) = "登录": Tabs(1) = "地图": Tabs(2) = "商店"
+        For i = 0 To 2
+            M = CheckMouse(20 + 100 * i, 0, 80, 55)
+            If M Then
+                Page.Paint 0, 20 + 100 * i, 0, 80, 55, argb(50, 255, 255, 255)
+                If M = 3 Then Call SwitchTab(i)
+            End If
+            Page.Writes Tabs(i), 60 + 100 * i, 15, 18, argb(255, 255, 255, 255), style:=IIf(M = 0, FontStyleRegular, FontStyleBold), align:=StringAlignmentCenter
+        Next
+        Dim NTL As Long, NTR As Long
+        If TabTime <> 0 Then
+            pro = Cubic((GetTickCount - TabTime) / 500, 0, 1, 1, 1)
+            If pro > 1 Then pro = 1: TabTime = 0
+            If TR > OTR Then
+                If pro < 0.5 Then
+                    NTL = OTL: NTR = OTR + (TR - OTR) * (pro / 0.5)
+                Else
+                    NTR = TR: NTL = OTL + (TL - OTL) * ((pro - 0.5) / 0.5)
+                End If
+            Else
+                If pro < 0.5 Then
+                    NTR = OTR: NTL = OTL + (TL - OTL) * (pro / 0.5)
+                Else
+                    NTL = TL: NTR = OTR + (TR - OTR) * ((pro - 0.5) / 0.5)
+                End If
+            End If
+        Else
+            NTL = TL: NTR = TR
+        End If
+        Page.Paint 0, NTL, 55 - 6, NTR - NTL, 6, argb(255, 50, 202, 185)
+    End If
+
     For i = 1 To UBound(Water)
         If i > UBound(Water) Then Exit For
         pro = Cubic((GetTickCount - Water(i).time) / 1000, 0, 1, 1, 1)

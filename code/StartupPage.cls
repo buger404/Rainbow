@@ -32,7 +32,7 @@ Public Sub Update()
     End If
     If FinishTime <> 0 Then
         pro = 1 - (GetTickCount - (FinishTime + 2000)) / 1000
-        If pro < 0 Then pro = 0: FinishTime = 0: ECore.NewTransform transFadeIn, 1000, "LoginPage"
+        If pro < 0 Then pro = 0: FinishTime = 0: MousePage.SwitchTab 0: ECore.NewTransform transFadeIn, 1000, "LoginPage"
     End If
     
     Page.DrawImage "logo.png", GW / 2, GH / 2 - 30, alpha:=pro, pos:=posOnCenter
@@ -44,7 +44,7 @@ Public Sub Wheel(Direction As Integer, Depth As Single)
     '鼠标滚轮事件
     'Direction:方向，Depth：深度
 End Sub
-Public Sub AnimationMsg(id As String, msg As String)
+Public Sub AnimationMsg(ID As String, msg As String)
     '动画消息接收
 End Sub
 Public Sub Enter()
@@ -59,7 +59,7 @@ End Sub
 Public Sub Lostfocus()
     '窗口失去焦点事件
 End Sub
-Public Sub AnimationDone(id As Integer)
+Public Sub AnimationDone(ID As Integer)
     '动画播放结束事件
     'id：结束的动画ID
 End Sub
