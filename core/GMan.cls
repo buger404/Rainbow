@@ -26,9 +26,9 @@ Dim Pages() As Page, Transform As Transform
 Dim mPage As String, aPage As Object
 Dim OutOfWindow As Boolean
 Dim FirstPlay As Boolean
-Public CDC As Long, ODC As Long, GG As Long, pB As Long
+Public CDC As Long, ODC As Long, GG As Long, pB As Long, Pen As Long, ODC2 As Long
 Public LastPage As String
-Public UpdatingPage As String, LockPage As String
+Public UpdatingPage As String, LockPage As String, UPage As GPage
 Dim CurrentPage As Integer
 Dim IsLayered As Boolean
 Dim ErrorMark As Boolean, ErrorMark2 As Boolean
@@ -39,10 +39,12 @@ Dim ErrorMark As Boolean, ErrorMark2 As Boolean
         ReDim Pages(0)
         CDC = CreateCDC(GW, GH)
         ODC = CreateCDC(GW, GH)
+        ODC2 = CreateCDC(GW, GH)
         PoolCreateFromHdc CDC, GG
         GdipSetSmoothingMode GG, SmoothingModeAntiAlias
         GdipSetTextRenderingHint GG, TextRenderingHintAntiAlias
         PoolCreateSolidFill argb(255, 255, 255, 255), pB
+        PoolCreatePen1 argb(255, 255, 255, 255), 1, UnitPixel, Pen
     End Sub
     Public Sub Layered(Optional WithAero As Boolean = False)
         SetWindowLongA GHwnd, GWL_EXSTYLE, GetWindowLongA(GHwnd, GWL_EXSTYLE) Or WS_EX_LAYERED
@@ -52,6 +54,7 @@ Dim ErrorMark As Boolean, ErrorMark2 As Boolean
     Public Sub Dispose()
         PoolDeleteGraphics GG
         PoolDeleteBrush pB
+        PoolDeletePen Pen
         For I = 1 To UBound(Pages)
             Pages(I).p.Dispose
         Next
@@ -98,7 +101,7 @@ Dim ErrorMark As Boolean, ErrorMark2 As Boolean
         
         If ECore Is Me Then
             If (Not FirstPlay) Then
-                FirstPlay = True: SysPage.OpenTime = GetTickCount: SysPage.index = 1
+                FirstPlay = True: SysPage.OpenTime = GetTickCount: SysPage.Index = 1
                 Call NewTransform
             End If
             If (Not SysPage.DoneMark) Then
@@ -113,6 +116,7 @@ Dim ErrorMark As Boolean, ErrorMark2 As Boolean
             CurrentPage = I
             If ActivePage = Pages(I).Name Or (Pages(I).p.TopPage And (Not ErrorMark)) Then
                 UpdatingPage = Pages(I).Name
+                Set UPage = Pages(I).p
                 Pages(I).p.Update
                 Pages(I).p.Display (CDC)
                 If Pages(I).Name = "ErrorScreen" Then ErrorMark2 = True
@@ -139,11 +143,11 @@ skipPage:
         
         If App.LogMode = 0 Then
             Dim SOrIndex As Integer
-            SOrIndex = SysPage.index
-            SysPage.index = 4
+            SOrIndex = SysPage.Index
+            SysPage.Index = 4
             SysPage.Page.Update
             SysPage.Page.Display (CDC)
-            SysPage.index = SOrIndex
+            SysPage.Index = SOrIndex
             For I = 1 To UBound(SGS)
                 If I > UBound(SGS) Then Exit For
                 If SGS(I).ClearTime = ClearOnUpdate Then GoTo ClearSGS
@@ -163,8 +167,11 @@ NoClear:
             End If
         End If
         
+        PaintDC CDC, ODC2
+        If Not MousePage Is Nothing Then MousePage.Page.Update: MousePage.Page.Display (CDC)
+        
         If IsLayered Then
-            Dim bs As BLENDFUNCTION, sz As size
+            Dim bs As BLENDFUNCTION, sz As Size
             Dim SrcPoint As POINTAPI
             With bs
                 .AlphaFormat = AC_SRC_ALPHA
@@ -178,9 +185,11 @@ NoClear:
         Else
             BitBlt GDC, 0, 0, GW, GH, CDC, 0, 0, vbSrcCopy
         End If
+        
+        PaintDC ODC2, CDC
         tFPS = tFPS + 1: FPSctt = FPSctt + (Timer * 1000 - t)
         
-        If Mouse.State = 2 Then Mouse.State = 0
+        If Mouse.state = 2 Then Mouse.state = 0
         
     End Sub
 '========================================================

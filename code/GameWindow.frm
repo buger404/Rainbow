@@ -3,7 +3,7 @@ Begin VB.Form GameWindow
    Appearance      =   0  'Flat
    BackColor       =   &H80000005&
    BorderStyle     =   1  'Fixed Single
-   Caption         =   "窗口名称"
+   Caption         =   "虹光"
    ClientHeight    =   6672
    ClientLeft      =   48
    ClientTop       =   396
@@ -15,12 +15,6 @@ Begin VB.Form GameWindow
    ScaleMode       =   3  'Pixel
    ScaleWidth      =   805
    StartUpPosition =   2  '屏幕中心
-   Begin VB.Timer DrawTimer 
-      Enabled         =   0   'False
-      Interval        =   5
-      Left            =   9000
-      Top             =   240
-   End
 End
 Attribute VB_Name = "GameWindow"
 Attribute VB_GlobalNameSpace = False
@@ -32,21 +26,44 @@ Attribute VB_Exposed = False
     Dim EC As GMan
 '==================================================
 '   在此处放置你的页面类模块声明
+    Dim LoginPage As LoginPage
+    Dim StartupPage As StartupPage
+    Dim EndMark As Boolean
 '==================================================
 
-Private Sub DrawTimer_Timer()
-    '绘制
-    EC.Display
+Private Sub LockMouse()
+    Dim r As RECT
+    GetClientRect Me.Hwnd, r
+    r.Left = Me.Left / Screen.TwipsPerPixelX + 3
+    r.top = Me.top / Screen.TwipsPerPixelY + 27 / (Screen.TwipsPerPixelY / 15)
+    r.Bottom = r.Bottom + r.top - 3
+    r.Right = r.Right + r.Left - 3
+    ClipCursor r
+    ShowCursor False
+    MouseLocked = True
+End Sub
+Private Sub UnLockMouse()
+    ClipCursor ByVal 0
+    ShowCursor True
+    MouseLocked = False
 End Sub
 
 Private Sub Form_KeyPress(KeyAscii As Integer)
     '发送字符输入
     If TextHandle <> 0 Then WaitChr = WaitChr & Chr(KeyAscii)
+    If MouseLocked And KeyAscii = vbKeyEscape Then Call UnLockMouse
 End Sub
 
 Private Sub Form_Load()
+    On Error GoTo SkipFaceCreator
+    Dim FSO As Object
+    Set FSO = CreateObject("Scripting.FileSystemObject")
+    If Dir(App.path & "\temp", vbDirectory) <> "" Then FSO.DeleteFolder App.path & "\temp"
+    FSO.CreateFolder App.path & "\temp"
+SkipFaceCreator:
+
     '初始化Emerald（在此处可以修改窗口大小哟~）
-    StartEmerald Me.hWnd, 805, 556
+    StartEmerald Me.Hwnd, 1152 * 0.8, 786 * 0.8
     '创建字体
     MakeFont "微软雅黑"
     '创建页面管理器
@@ -61,41 +78,58 @@ Private Sub Form_Load()
     MusicList.Create App.path & "\music"
 
     '开始显示
+    Set StartupPage = New StartupPage
+    
+    EC.ActivePage = "StartupPage"
+    
     Me.Show
-    DrawTimer.Enabled = True
+    Call LockMouse
+    
+    Dim Time As Long
+    Time = GetTickCount
+    StartupPage.OpenTime = Time
+    Do While GetTickCount - Time <= 1500
+        DoTap
+    Loop
     
     '在此处初始化你的页面
     '=============================================
     '示例：TestPage.cls
     '     Set TestPage = New TestPage
     '公共部分：Dim TestPage As TestPage
+        Set LoginPage = New LoginPage
+        Set MousePage = New MousePage
     '=============================================
-
-    '设置活动页面
-    EC.ActivePage = "[你的页面名称]"
+    
+    StartupPage.FinishTime = GetTickCount
+    Do While Not EndMark
+        EC.Display: DoEvents
+    Loop
 End Sub
 
-Private Sub Form_MouseDown(button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub Form_MouseDown(button As Integer, Shift As Integer, X As Single, y As Single)
     '发送鼠标信息
-    UpdateMouse X, Y, 1, button
+    If Not MouseLocked Then Call LockMouse
+    UpdateMouse X, y, 1, button
 End Sub
 
-Private Sub Form_MouseMove(button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub Form_MouseMove(button As Integer, Shift As Integer, X As Single, y As Single)
     '发送鼠标信息
-    If Mouse.State = 0 Then
-        UpdateMouse X, Y, 0, button
+    If Not MouseLocked Then Exit Sub
+    If Mouse.state = 0 Then
+        UpdateMouse X, y, 0, button
     Else
-        Mouse.X = X: Mouse.Y = Y
+        Mouse.X = X: Mouse.y = y
     End If
 End Sub
-Private Sub Form_MouseUp(button As Integer, Shift As Integer, X As Single, Y As Single)
+Private Sub Form_MouseUp(button As Integer, Shift As Integer, X As Single, y As Single)
     '发送鼠标信息
-    UpdateMouse X, Y, 2, button
+    UpdateMouse X, y, 2, button
 End Sub
 
 Private Sub Form_Unload(Cancel As Integer)
     '终止绘制
-    DrawTimer.Enabled = False
+    EndMark = True
     '释放Emerald资源
     EndEmerald
 End Sub

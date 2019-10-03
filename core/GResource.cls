@@ -168,9 +168,9 @@ Public Sub ApplyColorMatrixEffect(n, m() As Single)
     If XPMode Then Exit Sub
 
     Dim e As ColorMatrix
-    For I = 0 To 4
+    For i = 0 To 4
         For S = 0 To 4
-            e.m(I, S) = m(I, S)
+            e.m(i, S) = m(i, S)
         Next
     Next
     ApplyEffect n, ColorMatrix
@@ -201,21 +201,21 @@ Public Sub ApplyLevelsEffect(n, highlight As Long, midtone As Long, Shadow As Lo
     GdipSetEffectParameters Effect, e, LenB(e)
     ApplyEffectStep2
 End Sub
-Private Sub ReDraw(I As Integer)
-    If Mems(I).GIF.Count > 0 Then Exit Sub
+Private Sub ReDraw(i As Integer)
+    If Mems(i).GIF.Count > 0 Then Exit Sub
     
     Dim g As Long
-    PoolCreateFromHdc Mems(I).Hwnd, g
+    PoolCreateFromHdc Mems(i).Hwnd, g
     GdipSetSmoothingMode g, SmoothingModeAntiAlias
     GdipGraphicsClear g, 0
-    GdipDrawImageRect g, Mems(I).ImgHwnd, 0, 0, Mems(I).w, Mems(I).h
+    GdipDrawImageRect g, Mems(i).ImgHwnd, 0, 0, Mems(i).w, Mems(i).h
     PoolDeleteGraphics g
     
     For S = 0 To 3
-        PoolCreateFromHdc Mems(I).Imgs(S), g
+        PoolCreateFromHdc Mems(i).Imgs(S), g
         GdipSetSmoothingMode g, SmoothingModeAntiAlias
         GdipGraphicsClear g, 0
-        GdipDrawImageRect g, Mems(I).ImgHwnd, IIf(S = 1 Or S = 3, Mems(I).w, 0), IIf(S = 2 Or S = 3, Mems(I).h, 0), Mems(I).w * IIf(S = 1 Or S = 3, -1, 1), Mems(I).h * IIf(S = 2 Or S = 3, -1, 1)
+        GdipDrawImageRect g, Mems(i).ImgHwnd, IIf(S = 1 Or S = 3, Mems(i).w, 0), IIf(S = 2 Or S = 3, Mems(i).h, 0), Mems(i).w * IIf(S = 1 Or S = 3, -1, 1), Mems(i).h * IIf(S = 2 Or S = 3, -1, 1)
         PoolDeleteGraphics g
     Next
     
@@ -223,14 +223,14 @@ Private Sub ReDraw(I As Integer)
     Dim iW As Long, iH As Long
 
     ReDim Preserve ColorLists(UBound(ColorLists) + 1)
-    ReDim ColorLists(UBound(ColorLists)).IsAlpha(Mems(I).w + 1, Mems(I).h + 1)
+    ReDim ColorLists(UBound(ColorLists)).IsAlpha(Mems(i).w + 1, Mems(i).h + 1)
     
-    DC = Mems(I).Imgs(0)
-    GdipGetImageWidth Mems(I).ImgHwnd, iW: GdipGetImageHeight Mems(I).ImgHwnd, iH
-    For X = 0 To Mems(I).w - 1
-        For y = 0 To Mems(I).h - 1
+    DC = Mems(i).Imgs(0)
+    GdipGetImageWidth Mems(i).ImgHwnd, iW: GdipGetImageHeight Mems(i).ImgHwnd, iH
+    For X = 0 To Mems(i).w - 1
+        For y = 0 To Mems(i).h - 1
             '取得像素点颜色
-            GdipBitmapGetPixel Mems(I).ImgHwnd, X / (Mems(I).w - 1) * iW, y / (Mems(I).h - 1) * iH, tempCo
+            GdipBitmapGetPixel Mems(i).ImgHwnd, X / (Mems(i).w - 1) * iW, y / (Mems(i).h - 1) * iH, tempCo
             CopyMemory tCo(0), tempCo, 4
             
             If tCo(3) = 255 Then ColorLists(UBound(ColorLists)).IsAlpha(X, y) = True
@@ -238,7 +238,7 @@ Private Sub ReDraw(I As Integer)
         DoEvents
     Next
     
-    Mems(I).CrashIndex = UBound(ColorLists)
+    Mems(i).CrashIndex = UBound(ColorLists)
 End Sub
 Public Sub Add(mem As Long, Kind As Integer, Name As String, Optional w, Optional h, Optional Folder As String = "")
     ReDim Preserve Mems(UBound(Mems) + 1)
@@ -275,21 +275,21 @@ End Property
 Public Sub Dispose()
     If DisposeMark Then Exit Sub
     Exit Sub
-    For I = 1 To UBound(Mems)
-        If Not Mems(I).copyed Then
-            Select Case Mems(I).Kind
+    For i = 1 To UBound(Mems)
+        If Not Mems(i).copyed Then
+            Select Case Mems(i).Kind
                 Case 0 'DC
-                    If Mems(I).Hwnd <> 0 Then DeleteObject Mems(I).Hwnd
-                    If Mems(I).ImgHwnd <> 0 Then PoolDisposeImage Mems(I).ImgHwnd
+                    If Mems(i).Hwnd <> 0 Then DeleteObject Mems(i).Hwnd
+                    If Mems(i).ImgHwnd <> 0 Then PoolDisposeImage Mems(i).ImgHwnd
                     For S = 0 To 3
-                        If Mems(I).Imgs(S) <> 0 Then DeleteObject Mems(I).Imgs(S)
+                        If Mems(i).Imgs(S) <> 0 Then DeleteObject Mems(i).Imgs(S)
                     Next
                 Case 1 'Graphics
-                    PoolDeleteGraphics Mems(I).Hwnd
+                    PoolDeleteGraphics Mems(i).Hwnd
             End Select
-            If Mems(I).GIF.Count > 0 Then
-                For S = 0 To Mems(I).GIF.Count
-                    DeleteObject Mems(I).GIF.frames(S)
+            If Mems(i).GIF.Count > 0 Then
+                For S = 0 To Mems(i).GIF.Count
+                    DeleteObject Mems(i).GIF.frames(S)
                 Next
             End If
         End If
@@ -314,7 +314,7 @@ Public Property Get ResourceGIFCount(index As Integer) As Long
     ResourceGIFCount = Mems(index).GIF.Count
 End Property
 Public Property Get ResourceGIFTime(index As Integer) As Long
-    ResourceGIFTime = Mems(index).GIF.time
+    ResourceGIFTime = Mems(index).GIF.Time
 End Property
 Public Property Get ResourceName(index As Integer) As Long
     ResourceName = Mems(index).Name
@@ -332,17 +332,17 @@ Public Property Get ResourceImageHandle(index As Integer) As Long
     ResourceImageHandle = Mems(index).ImgHwnd
 End Property
 Public Function GetImage(ByVal Name As String) As Integer
-    For I = SearchIndex To UBound(Mems)
-        If Mems(I).Kind = 0 Then
-            If Mems(I).Name = Name Then GetImage = I: Exit For
+    For i = SearchIndex To UBound(Mems)
+        If Mems(i).Kind = 0 Then
+            If Mems(i).Name = Name Then GetImage = i: Exit For
         End If
     Next
     
     If HotLoad Then
         If GetImage = 0 Then
-            For I = 1 To UBound(AssetsFolder)
-                If IsExitAFile(AssetsFolder(I) & Name) Then
-                    newImage AssetsFolder(I) & Name, FolderParam1(I), FolderParam2(I)
+            For i = 1 To UBound(AssetsFolder)
+                If IsExitAFile(AssetsFolder(i) & Name) Then
+                    newImage AssetsFolder(i) & Name, FolderParam1(i), FolderParam2(i)
                     GetImage = UBound(Mems)
                     Exit For
                 End If
@@ -354,20 +354,20 @@ Public Sub newImage(path As String, Optional arg1, Optional arg2, Optional Name 
     'when arg1 is missing ; i.w = i.w
     'when arg2 is missing but arg1 has content ; i.w = i.w * arg1
     'other ; i.w = arg1
-    Dim si As Integer, I As Long, w As Long, h As Long, DC As Long, g As Long
+    Dim si As Integer, i As Long, w As Long, h As Long, DC As Long, g As Long
     If IsMissing(arg1) Then si = 0
     If IsMissing(arg2) And (Not IsMissing(arg1)) Then si = 1
     If (Not IsMissing(arg2)) And (Not IsMissing(arg1)) Then si = 2
     
-    PoolCreateBitmapFromFile StrPtr(path), I
-    GdipGetImageWidth I, w: GdipGetImageHeight I, h
+    PoolCreateBitmapFromFile StrPtr(path), i
+    GdipGetImageWidth i, w: GdipGetImageHeight i, h
     
     If si = 1 Then w = Round(w * arg1): h = Round(h * arg1)
     If si = 2 Then w = arg1: h = arg2
     
     Dim gC As clsid, gL As Long, index As Long, temp() As String, CrashPath As Long
     CLSIDFromString StrPtr("{6AEDBD6D-3FB5-418A-83A6-7F45229DC872}"), gC
-    GdipImageGetFrameCount I, gC, gL
+    GdipImageGetFrameCount i, gC, gL
     
     If gL > 0 Then  '动态GIF支持
         temp = Split(path, "\")
@@ -376,16 +376,16 @@ Public Sub newImage(path As String, Optional arg1, Optional arg2, Optional Name 
             .GIF.Count = gL
             ReDim .GIF.frames(gL)
             For index = 0 To gL
-                GdipImageSelectActiveFrame I, gC, index
+                GdipImageSelectActiveFrame i, gC, index
                 DC = CreateCDC(w, h)
                 PoolCreateFromHdc DC, g
-                GdipDrawImageRect g, I, 0, 0, w, h
+                GdipDrawImageRect g, i, 0, 0, w, h
                 PoolDeleteGraphics g
                 .GIF.frames(index) = DC
             Next
         End With
         
-        Mems(UBound(Mems)).ImgHwnd = I
+        Mems(UBound(Mems)).ImgHwnd = i
         Exit Sub
     End If
     
@@ -396,14 +396,14 @@ Public Sub newImage(path As String, Optional arg1, Optional arg2, Optional Name 
         .Folder = temp(UBound(temp) - 1)
         .w = w
         .h = h
-        .ImgHwnd = I
+        .ImgHwnd = i
     End With
     
     For S = 0 To 3
         If NoLoadDirection And S > 0 Then Exit For
         DC = CreateCDC(w, h)
         PoolCreateFromHdc DC, g
-        GdipDrawImageRect g, I, IIf(S = 1 Or S = 3, w, 0), IIf(S = 2 Or S = 3, h, 0), w * IIf(S = 1 Or S = 3, -1, 1), h * IIf(S = 2 Or S = 3, -1, 1)
+        GdipDrawImageRect g, i, IIf(S = 1 Or S = 3, w, 0), IIf(S = 2 Or S = 3, h, 0), w * IIf(S = 1 Or S = 3, -1, 1), h * IIf(S = 2 Or S = 3, -1, 1)
         PoolDeleteGraphics g
         Mems(UBound(Mems)).Imgs(S) = DC
     Next
@@ -417,11 +417,11 @@ Public Sub newImage(path As String, Optional arg1, Optional arg2, Optional Name 
     ReDim ColorLists(UBound(ColorLists)).IsAlpha(w + 1, h + 1)
     
     DC = Mems(UBound(Mems)).Imgs(0)
-    GdipGetImageWidth I, iW: GdipGetImageHeight I, iH
+    GdipGetImageWidth i, iW: GdipGetImageHeight i, iH
     For X = 0 To w - 1
         For y = 0 To h - 1
             '取得像素点颜色
-            GdipBitmapGetPixel I, X / (w - 1) * iW, y / (h - 1) * iH, tempCo
+            GdipBitmapGetPixel i, X / (w - 1) * iW, y / (h - 1) * iH, tempCo
             CopyMemory tCo(0), tempCo, 4
 
             If tCo(3) = 255 Then ColorLists(UBound(ColorLists)).IsAlpha(X, y) = True
@@ -461,9 +461,9 @@ Public Sub NewImages(path As String, Optional arg1, Optional arg2)
         PreLoadCount = PreLoadCount + C
     Else
         Tree = AssetsTrees(index)
-        For I = 1 To UBound(Tree.Files)
+        For i = 1 To UBound(Tree.Files)
             ReDim Preserve Mems(UBound(Mems) + 1)
-            Mems(UBound(Mems)) = Tree.Files(I)
+            Mems(UBound(Mems)) = Tree.Files(i)
             Mems(UBound(Mems)).copyed = True
         Next
         ReLoadCount = ReLoadCount + UBound(Tree.Files)
@@ -471,8 +471,9 @@ Public Sub NewImages(path As String, Optional arg1, Optional arg2)
     End If
     
     f = Dir(path)
-    I = 1
+    i = 1
     Do While f <> ""
+        If Not ECore Is Nothing Then Call DoTap
         If IsMissing(arg1) Then
             newImage path & f
         ElseIf IsMissing(arg2) Then
@@ -480,8 +481,8 @@ Public Sub NewImages(path As String, Optional arg1, Optional arg2)
         Else
             newImage path & f, arg1, arg2
         End If
-        Tree.Files(I) = Mems(UBound(Mems))
-        I = I + 1
+        Tree.Files(i) = Mems(UBound(Mems))
+        i = i + 1
         f = Dir()
         DoEvents
         LoadedCount = LoadedCount + 1
