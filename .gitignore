@@ -1,2 +1,3 @@
 .emr/*
-.temp/*
+temp/*
+server/Logs/*

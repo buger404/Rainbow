@@ -25,14 +25,33 @@ Attribute VB_Exposed = False
     Dim Water() As MouseWater
     Dim TL As Long, TR As Long, TabIndex As Integer
     Dim OTL As Long, OTR As Long, TabTime As Long
+    Dim LoginTime As Long, Logined As Boolean
+    Dim MouseTime As Long, MouseTouched As Boolean
+    
 '======================================
-Public Sub SwitchTab(Index As Integer)
+Public Sub Login()
+    Page.Res.newImage App.path & "\assets\login\faceback.png", 148 * 0.4, 148 * 0.4
+    Call DoTap
+    If AC = "0" Then
+        Page.Res.newImage App.path & "\assets\login\face.png", 148 * 0.4, 148 * 0.4
+        Call DoTap
+    Else
+        Page.Res.newImage App.path & "\temp\" & AC & ".bmp", 148 * 0.4 + 3, 148 * 0.4 + 3
+        Call DoTap
+        Page.Res.ClipCircle AC & ".bmp"
+        Call DoTap
+    End If
+    LoginTime = GetTickCount
+    Logined = True
+End Sub
+Public Sub SwitchTab(index As Integer)
+    If index > 0 Then NotifyPage.Popup "即将推出", "我将在第一时间编写代码", 2, "system.png", "好的": Exit Sub
     TabTime = GetTickCount
     OTL = TL: OTR = TR
     
-    TL = 60 + 100 * Index - 40
-    TR = 60 + 100 * Index + 40
-    TabIndex = Index
+    TL = 60 + 100 * index - 40
+    TR = 60 + 100 * index + 40
+    TabIndex = index
 End Sub
 Public Sub NewWater(ByVal X As Long, ByVal y As Long)
     Dim Co(3) As Byte, Color As Long
@@ -92,6 +111,14 @@ Public Sub Update()
         Page.Paint 0, NTL, 55 - 6, NTR - NTL, 6, argb(255, 50, 202, 185)
     End If
 
+    If Logined Then
+        pro = 1
+        If LoginTime <> 0 Then pro = Cubic((GetTickCount - LoginTime) / 1000, 0, 1, 1, 1)
+        If pro > 1 Then pro = 1: LoginTime = 0
+        Page.DrawImage "faceback.png", GW - 70, 55, alpha:=pro, pos:=posOnCenter
+        Page.DrawImage IIf(AC = "0", "face.png", AC & ".bmp"), GW - 70, 55, alpha:=pro, pos:=posOnCenter
+    End If
+
     For i = 1 To UBound(Water)
         If i > UBound(Water) Then Exit For
         pro = Cubic((GetTickCount - Water(i).time) / 1000, 0, 1, 1, 1)
@@ -103,14 +130,22 @@ Public Sub Update()
         End If
     Next
     
-    Page.Paint 1, Mouse.X, Mouse.y, 20, 20, argb(255, 96, 96, 96), pos:=posOnCenter
-    Page.Paint 1, Mouse.X, Mouse.y, 20, 20, argb(255, 255, 255, 255), size:=3, style:=1, pos:=posOnCenter
+    If AnyMouseTouch <> MouseTouched Then MouseTouched = AnyMouseTouch: MouseTime = GetTickCount
+    AnyMouseTouch = False
+    
+    pro = 1
+    If MouseTime <> 0 Then pro = Cubic((GetTickCount - MouseTime) / 300, 0, 1, 1, 1)
+    If pro > 1 Then pro = 1: MouseTime = 0
+    If Not MouseTouched Then pro = 1 - pro
+    
+    Page.Paint 1, Mouse.X, Mouse.y, 24 - 4 * pro, 24 - 4 * pro, argb(255, 255, 255, 255), pos:=posOnCenter
+    Page.Paint 1, Mouse.X, Mouse.y, 18 - 4 * pro, 18 - 4 * pro, argb(255, 96 + (16 - 96) * pro, 96 + (229 - 96) * pro, 96 + (255 - 96) * pro), pos:=posOnCenter
 End Sub
 Public Sub Wheel(Direction As Integer, Depth As Single)
     '鼠标滚轮事件
     'Direction:方向，Depth：深度
 End Sub
-Public Sub AnimationMsg(ID As String, msg As String)
+Public Sub AnimationMsg(id As String, msg As String)
     '动画消息接收
 End Sub
 Public Sub Enter()
@@ -125,7 +160,7 @@ End Sub
 Public Sub Lostfocus()
     '窗口失去焦点事件
 End Sub
-Public Sub AnimationDone(ID As Integer)
+Public Sub AnimationDone(id As Integer)
     '动画播放结束事件
     'id：结束的动画ID
 End Sub

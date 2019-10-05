@@ -39,11 +39,11 @@ Function StrConvEx(b, Optional Charset As String = "GB2312")
     Set o = Nothing
 End Function
 Public Function GetLoginQQ() As String()
-    Dim Hwnd As Long, QQ As String, Size As Integer, Class As String
+    Dim Hwnd As Long, QQ As String, size As Integer, Class As String
     Dim Ret() As String
     ReDim Ret(0)
     Hwnd = FindWindowA("CTXOPConntion_Class", vbNullString)
-    If Hwnd = 0 Then Exit Function
+    If Hwnd = 0 Then GetLoginQQ = Ret: Exit Function
     
     Do While Hwnd <> 0
         QQ = String(255, vbNullChar)

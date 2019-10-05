@@ -19,41 +19,49 @@ Attribute VB_Exposed = False
     Dim AccountTime As Long
     Dim StayText As String
 '======================================
-Public Sub Login(ByVal Index As Long)
-    CurrentAccount = Index
-    'AC = Account(index): ACN = AccountN(index)
-    If Index = 0 Then
+Public Sub Login(ByVal index As Long)
+    CurrentAccount = index
+
+    If index = 0 Then
         AC = "0": ACN = "游客"
     Else
-        AC = Account(Index): ACN = AccountN(Index)
+        AC = Account(index): ACN = AccountN(index)
     End If
     
     AccountMode = 2
     ECore.NewTransform transFadeIn, 700
-    SE.Play "login.wav"
+    
     StayText = "正在连接服务器"
-    Sock.LocalPort = 64046: Sock.RemotePort = 64046
+    FakeSleep 1000
     'Sock.Connect "172.17.10.36", "64046"
     Sock.Connect "47.100.137.52", "64046"
     'Sock.Connect "127.0.0.1", "6404"
     Do While Sock.state <> 7
         Select Case Sock.state
-            Case 3: StayText = "服务器连接挂起"
+            Case 3: NotifyPage.Popup "连接出错", "服务器的连接被挂起", 2, "server.png", "好的": GoTo CancelLogin
             Case 4: StayText = "正在解析服务器域名"
             Case 5: StayText = "已识别服务器主机"
             Case 6: StayText = "正在连接服务器"
-            Case 8: StayText = "连接被关闭"
-            Case 9: StayText = "连接时出错"
+            Case 8: NotifyPage.Popup "连接出错", "连接被服务器关闭", 2, "server.png", "好的": GoTo CancelLogin
+            Case 9: NotifyPage.Popup "连接出错", "请检查您的网络连接后重试", 1, "server.png", "好的": GoTo CancelLogin
         End Select
         DoTap
     Loop
     Money = -1
     StayText = "正在取得玩家信息"
+    FakeSleep 500
     RemoteSend "login*" & AC
     Do While Money = -1
         DoTap
     Loop
-    StayText = "你号没了"
+    StayText = "登录成功"
+    MousePage.Login
+    SE.Play "login.wav"
+    NotifyPage.Popup "登录成功", "后续功能敬请期待", 3, "server.png", "有生之年系列"
+    Exit Sub
+CancelLogin:
+    AccountMode = 0
+    ECore.NewTransform transFadeIn, 700
 End Sub
 Public Sub Update()
     '游戏每一帧的过程（绘制过程请放在此处）
@@ -129,19 +137,23 @@ Public Sub Update()
             If AccountMode = 0 Then
                 StayText = "请稍候"
                 AccountMode = 2: ECore.NewTransform transFadeIn, 700
-                For i = 1 To 100
-                    Call DoTap: Sleep 10
-                Next
                 Dim QQ() As String, temp As String, Args() As String
                 StayText = "正在检测登录的QQ"
                 QQ = GetLoginQQ
+                If UBound(QQ) = 0 Then
+                    NotifyPage.Popup "使用QQ登录", "您没有在电脑上登录QQ", 1, "login.png", "我这就去登录QQ"
+                    AccountMode = 0: ECore.NewTransform transFadeIn, 700
+                    Exit Sub
+                End If
                 ReDim Account(UBound(QQ)): ReDim AccountN(UBound(QQ))
                 For i = 1 To UBound(QQ)
                     StayText = "正在连接QQ" & QQ(i)
+                    Call DoTap
                     temp = NetContent("https://users.qzone.qq.com/fcg-bin/cgi_get_portrait.fcg?uins=" & QQ(i))
                     Args = Split(temp, """")
                     If Dir(App.path & "\temp\" & QQ(i) & ".bmp") = "" Then
                         StayText = "正在获取头像：QQ" & QQ(i)
+                        Call DoTap
                         Download Args(3), App.path & "\temp\" & QQ(i) & ".bmp"
                         Page.Res.newImage App.path & "\temp\" & QQ(i) & ".bmp", 148 * 0.8 + 3, 148 * 0.8 + 3
                         Page.Res.ClipCircle QQ(i) & ".bmp"
@@ -163,7 +175,7 @@ Public Sub Wheel(Direction As Integer, Depth As Single)
     '鼠标滚轮事件
     'Direction:方向，Depth：深度
 End Sub
-Public Sub AnimationMsg(ID As String, msg As String)
+Public Sub AnimationMsg(id As String, msg As String)
     '动画消息接收
 End Sub
 Public Sub Enter()
@@ -178,7 +190,7 @@ End Sub
 Public Sub Lostfocus()
     '窗口失去焦点事件
 End Sub
-Public Sub AnimationDone(ID As Integer)
+Public Sub AnimationDone(id As Integer)
     '动画播放结束事件
     'id：结束的动画ID
 End Sub

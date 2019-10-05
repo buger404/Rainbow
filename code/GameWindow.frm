@@ -90,6 +90,7 @@ SkipFaceCreator:
 
     '开始显示
     Set StartupPage = New StartupPage
+    Set MousePage = New MousePage
     
     EC.ActivePage = "StartupPage"
     
@@ -109,7 +110,7 @@ SkipFaceCreator:
     '     Set TestPage = New TestPage
     '公共部分：Dim TestPage As TestPage
         Set LoginPage = New LoginPage
-        Set MousePage = New MousePage
+        Set NotifyPage = New NotifyPage
     '=============================================
     
     StartupPage.FinishTime = GetTickCount

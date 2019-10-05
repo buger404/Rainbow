@@ -31,6 +31,7 @@ Module=QQCore; code\QQCore.bas
 Class=MousePage; code\MousePage.cls
 Class=StartupPage; code\StartupPage.cls
 Object={248DD890-BB45-11CF-9ABC-0080C7E7B78D}#1.0#0; MSWINSCK.OCX
+Class=NotifyPage; code\NotifyPage.cls
 Startup="GameWindow"
 HelpFile=""
 Title="Rainbow"

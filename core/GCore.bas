@@ -65,8 +65,8 @@ Attribute VB_Name = "GCore"
         Imgs(3) As Long
         Name As String
         Folder As String
-        w As Long
-        h As Long
+        W As Long
+        H As Long
         copyed As Boolean
         CrashIndex As Long
     End Type
@@ -180,7 +180,7 @@ Attribute VB_Name = "GCore"
         
         Set data = Nothing
     End Sub
-    Public Sub StartEmerald(Hwnd As Long, w As Long, h As Long)
+    Public Sub StartEmerald(Hwnd As Long, W As Long, H As Long)
         ReDim ColorLists(0)
         ReDim SGS(0)
             
@@ -210,13 +210,13 @@ Attribute VB_Name = "GCore"
         
         InitGDIPlus
         
-        GHwnd = Hwnd: GW = w: GH = h
+        GHwnd = Hwnd: GW = W: GH = H
         Dim DPI As Long
         DPI = 1440 / Screen.TwipsPerPixelX
         If (GetWindowLongA(Hwnd, GWL_STYLE) And WS_CAPTION) = WS_CAPTION Then
-            SetWindowPos Hwnd, 0, 0, 0, w + 3 * Int(DPI / 96), h + 26 * Int(DPI / 96), SWP_NOMOVE Or SWP_NOZORDER
+            SetWindowPos Hwnd, 0, 0, 0, W + 3 * Int(DPI / 96), H + 26 * Int(DPI / 96), SWP_NOMOVE Or SWP_NOZORDER
         Else
-            SetWindowPos Hwnd, 0, 0, 0, w - 2 * Int(DPI / 96), h - 2 * Int(DPI / 96), SWP_NOMOVE Or SWP_NOZORDER
+            SetWindowPos Hwnd, 0, 0, 0, W - 2 * Int(DPI / 96), H - 2 * Int(DPI / 96), SWP_NOMOVE Or SWP_NOZORDER
         End If
         
         GDC = GetDC(Hwnd)
@@ -303,7 +303,7 @@ sth:
     Public Sub BlurTo(DC As Long, srcDC As Long, buffWin As Form, Optional Radius As Long = 60)
         If XPMode Then BitBlt DC, 0, 0, GW, GH, srcDC, 0, 0, vbSrcCopy: Exit Sub
         
-        Dim i As Long, g As Long, e As Long, b As BlurParams, w As Long, h As Long
+        Dim i As Long, g As Long, e As Long, b As BlurParams, W As Long, H As Long
         'Õ³Ìùµ½»º³å´°¿Ú
         buffWin.AutoRedraw = True
         BitBlt buffWin.hdc, 0, 0, GW, GH, srcDC, 0, 0, vbSrcCopy: buffWin.Refresh
@@ -313,8 +313,8 @@ sth:
         
         'Ä£ºý²Ù×÷
         PoolCreateEffect2 GdipEffectType.Blur, e: b.Radius = Radius: GdipSetEffectParameters e, b, LenB(b)
-        GdipGetImageWidth i, w: GdipGetImageHeight i, h
-        GdipBitmapApplyEffect i, e, NewRectL(0, 0, w, h), 0, 0, 0
+        GdipGetImageWidth i, W: GdipGetImageHeight i, H
+        GdipBitmapApplyEffect i, e, NewRectL(0, 0, W, H), 0, 0, 0
         
         '»­~
         PoolCreateFromHdc DC, g
@@ -325,13 +325,13 @@ sth:
     Public Sub BlurImg(img As Long, Radius As Long)
         If XPMode Then Exit Sub
     
-        Dim b As BlurParams, e As Long, w As Long, h As Long
+        Dim b As BlurParams, e As Long, W As Long, H As Long
         
         'Ä£ºý²Ù×÷
         
         PoolCreateEffect2 GdipEffectType.Blur, e: b.Radius = Radius: GdipSetEffectParameters e, b, LenB(b)
-        GdipGetImageWidth img, w: GdipGetImageHeight img, h
-        GdipBitmapApplyEffect img, e, NewRectL(0, 0, w, h), 0, 0, 0
+        GdipGetImageWidth img, W: GdipGetImageHeight img, H
+        GdipBitmapApplyEffect img, e, NewRectL(0, 0, W, H), 0, 0, 0
         
         '»­~
         PoolDeleteEffect e 'À¬»ø´¦Àí
@@ -375,21 +375,22 @@ sth:
             .button = button
         End With
     End Sub
-    Public Function CheckMouse(ByVal X As Long, ByVal y As Long, ByVal w As Long, ByVal h As Long) As MButtonState
+    Public Function CheckMouse(ByVal X As Long, ByVal y As Long, ByVal W As Long, ByVal H As Long) As MButtonState
         'Return Value:0=none,1=in,2=down,3=up
         If Debug_mouse Then
             GdipSetSolidFillColor ECore.pB, argb(20, 255, 0, 0)
-            GdipFillRectangle ECore.UPage.GG, ECore.pB, X, y, w, h
+            GdipFillRectangle ECore.UPage.GG, ECore.pB, X, y, W, H
         End If
         If ECore.LockPage <> "" Then
             If ECore.LockPage <> ECore.UpdatingPage Then Exit Function
         End If
-        If Mouse.X >= X And Mouse.y >= y And Mouse.X <= X + w And Mouse.y <= y + h Then
+        If Mouse.X >= X And Mouse.y >= y And Mouse.X <= X + W And Mouse.y <= y + H Then
+            AnyMouseTouch = True
             If Debug_mouse Then
                 GdipSetSolidFillColor ECore.pB, argb(255, 27, 27, 27)
                 GdipFillEllipse ECore.UPage.GG, ECore.pB, X - 10, y - 10, 20, 20
                 GdipSetSolidFillColor ECore.pB, argb(80, 255, 0, 0)
-                GdipFillRectangle ECore.UPage.GG, ECore.pB, X, y, w, h
+                GdipFillRectangle ECore.UPage.GG, ECore.pB, X, y, W, H
                 EF.Writes Mouse.state + 1, X - 10, y - 7, ECore.UPage.GG, argb(255, 255, 255, 255), 14, 20, 0, StringAlignmentCenter, FontStyleBold
             End If
             CheckMouse = Mouse.state + 1
@@ -417,6 +418,7 @@ sth:
             If DrawF.CrashIndex <> 0 Then
                 If ColorLists(DrawF.CrashIndex).IsAlpha((Mouse.X - DrawF.X) * DrawF.WSc, (Mouse.y - DrawF.y) * DrawF.HSc) = False Then CheckMouse2 = mMouseOut: Exit Function
             End If
+            AnyMouseTouch = True
             If Mouse.state = 2 Then MousePage.NewWater Mouse.X, Mouse.y: Mouse.state = 0
         End If
     End Function
@@ -433,9 +435,9 @@ sth:
     End Function
 '========================================================
 '   Screen Window
-    Public Function StartScreenDialog(w As Long, h As Long, ch As Object) As Object
+    Public Function StartScreenDialog(W As Long, H As Long, ch As Object) As Object
         Set StartScreenDialog = New EmeraldWindow
-        StartScreenDialog.NewFocusWindow w, h, ch
+        StartScreenDialog.NewFocusWindow W, H, ch
         Dim f As Object
         For Each f In VB.Forms
             If TypeName(f) <> "EmeraldWindow" Then f.Enabled = False
